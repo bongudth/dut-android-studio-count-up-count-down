@@ -20,9 +20,16 @@ public class DetailsActivity extends AppCompatActivity {
         setContentView(viewRoot);
 
         Intent intent = getIntent();
-        if (intent != null) {
-            String data = intent.getStringExtra("number");
-            binding.tvDetail.setText(data);
-        }
+        String value = intent.getStringExtra("value");
+        int index = intent.getIntExtra("index", 0);
+        binding.numberEdit.setText(value);
+
+        binding.btnOk.setOnClickListener(e -> {
+            String newValue = binding.numberEdit.getText().toString().trim();
+            intent.putExtra("value", newValue);
+            intent.putExtra("index", index);
+            setResult(RESULT_OK, intent);
+            finish();
+        });
     }
 }

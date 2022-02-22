@@ -1,9 +1,5 @@
 package com.example.helloworld;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -11,10 +7,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.helloworld.databinding.ActivityMainBinding;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
-import java.util.ArrayList;
+import com.example.helloworld.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,7 +19,6 @@ public class MainActivity extends AppCompatActivity {
     private MyViewModel model;
     
     private ArrayAdapter<String> arrayAdapter;
-    private ArrayList<String> arrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,28 +27,24 @@ public class MainActivity extends AppCompatActivity {
         View viewRoot = binding.getRoot();
         setContentView(viewRoot);
 
-        arrayList = new ArrayList<String>();
-        arrayAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1,
-                arrayList
-        );
-        binding.lvCount.setAdapter(arrayAdapter);
-
         model = new ViewModelProvider(this).get(MyViewModel.class);
 
-        model.getNumber().observe(this, new Observer<Integer>() {
-            @Override
-            public void onChanged(Integer integer) {
-                binding.tvCount.setText("" + integer);
-                arrayList.add("" + integer);
-                arrayAdapter.notifyDataSetChanged();
-            }
+        model.getNumber().observe(this, number -> {
+            binding.tvCount.setText(number.toString());
         });
+
+        model.getNumberList().observe(this, numberList -> {
+            arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, numberList);
+            binding.lvCount.setAdapter(arrayAdapter);
+        });
+
+        binding.lvCount.setAdapter(arrayAdapter);
 
         binding.btnUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 model.increaseNumber();
+                arrayAdapter.notifyDataSetChanged();
             }
         });
 
@@ -60,15 +52,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 model.decreaseNumber();
-            }
-        });
-
-        binding.lvCount.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-                arrayList.remove(i);
                 arrayAdapter.notifyDataSetChanged();
-                return false;
             }
         });
 
@@ -76,9 +60,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
-                intent.putExtra("number", arrayList.get(i));
-                startActivity(intent);
+                intent.putExtra("value", ((TextView) view).getText());
+                intent.putExtra("index", i);
+                startActivityForResult(intent, 1);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                String newValue = data.getStringExtra("value");
+                int index = data.getIntExtra("index", 0);
+                model.getNumberList().observe(this, numberList -> {
+                    numberList.set(index, newValue);
+                    arrayAdapter.notifyDataSetChanged();
+                });
+            }
+        }
     }
 }
