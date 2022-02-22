@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -68,6 +69,15 @@ public class MainActivity extends AppCompatActivity {
                 arrayList.remove(i);
                 arrayAdapter.notifyDataSetChanged();
                 return false;
+            }
+        });
+
+        binding.lvCount.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
+                intent.putExtra("number", arrayList.get(i));
+                startActivity(intent);
             }
         });
     }
